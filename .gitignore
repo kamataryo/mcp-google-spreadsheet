@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.log
+.pnpm-debug.log*
+
+# Claude Code local settings (may contain allowed tool lists, personal paths)
+.claude/
+
+# Service Account credentials - NEVER commit
+service-account.json
+*service-account*.json
