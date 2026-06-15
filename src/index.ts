@@ -6,7 +6,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { createAuth } from './auth.js';
+import { createAuth, getServiceAccountEmail } from './auth.js';
 import { SheetsClient } from './sheets-client.js';
 import { extractSpreadsheetId } from './url.js';
 
@@ -219,7 +219,33 @@ class SpreadsheetMCPServer {
   private async handleConnect(args: { url: string }) {
     const spreadsheetId = extractSpreadsheetId(args.url);
     const client = this.getSheetsClient();
-    const meta = await client.getMetadata(spreadsheetId);
+
+    let meta;
+    try {
+      meta = await client.getMetadata(spreadsheetId);
+    } catch (error) {
+      const isPermissionError =
+        error instanceof Error &&
+        /403|forbidden|permission|access/i.test(error.message);
+
+      if (isPermissionError) {
+        const email = getServiceAccountEmail();
+        const emailLine = email
+          ? `  ${email}`
+          : '  （サービスアカウントのメールアドレスを取得できませんでした）';
+        throw new Error(
+          `このスプレッドシートにアクセスできません。\n` +
+            `以下のサービスアカウントに「編集者」として共有してください:\n\n` +
+            `${emailLine}\n\n` +
+            `共有手順:\n` +
+            `  1. スプレッドシートを開く → ${args.url}\n` +
+            `  2. 右上「共有」ボタンをクリック\n` +
+            `  3. 上記メールアドレスを入力して「編集者」で共有\n` +
+            `  4. 再度 connect_spreadsheet を実行`
+        );
+      }
+      throw error;
+    }
 
     connection = {
       spreadsheetId,

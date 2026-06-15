@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 
@@ -23,9 +23,12 @@ const SETUP_GUIDE = `
 5. アクセスしたいスプレッドシートに、サービスアカウントのメールアドレスを共有設定で追加
 `.trim();
 
+function resolveKeyPath(): string {
+  return process.env.MCP_GSPREAD_SERVICE_ACCOUNT_PATH ?? DEFAULT_KEY_PATH;
+}
+
 export function createAuth(): GoogleAuth {
-  const keyPath =
-    process.env.MCP_GSPREAD_SERVICE_ACCOUNT_PATH ?? DEFAULT_KEY_PATH;
+  const keyPath = resolveKeyPath();
 
   if (!existsSync(keyPath)) {
     throw new Error(SETUP_GUIDE);
@@ -35,4 +38,17 @@ export function createAuth(): GoogleAuth {
     keyFile: keyPath,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
+}
+
+export function getServiceAccountEmail(): string | null {
+  const keyPath = resolveKeyPath();
+  if (!existsSync(keyPath)) return null;
+  try {
+    const json = JSON.parse(readFileSync(keyPath, 'utf-8')) as {
+      client_email?: string;
+    };
+    return json.client_email ?? null;
+  } catch {
+    return null;
+  }
 }
