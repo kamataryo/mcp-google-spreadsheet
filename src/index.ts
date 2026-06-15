@@ -98,6 +98,16 @@ class SpreadsheetMCPServer {
           },
         },
         {
+          name: 'list_sheets',
+          description:
+            '接続中のスプレッドシートのシート名一覧を返します。軽量な確認用ツールです。',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+            required: [],
+          },
+        },
+        {
           name: 'get_sheet_info',
           description:
             '接続中のスプレッドシートのメタ情報（シート一覧、行数、列数、データ範囲）を取得します。',
@@ -180,6 +190,9 @@ class SpreadsheetMCPServer {
         }
         if (name === 'disconnect_spreadsheet') {
           return this.handleDisconnect();
+        }
+        if (name === 'list_sheets') {
+          return await this.handleListSheets();
         }
         if (name === 'get_sheet_info') {
           return await this.handleGetSheetInfo(
@@ -281,6 +294,22 @@ class SpreadsheetMCPServer {
     connection = null;
     return {
       content: [{ type: 'text', text: `「${title}」との接続を解除しました。` }],
+    };
+  }
+
+  private async handleListSheets() {
+    const conn = requireConnection();
+    const client = this.getSheetsClient();
+    const meta = await client.getMetadata(conn.spreadsheetId);
+
+    const lines = meta.sheets.map((s, i) => `${i + 1}. ${s.title}`).join('\n');
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `スプレッドシート「${meta.title}」のシート一覧:\n${lines}`,
+        },
+      ],
     };
   }
 

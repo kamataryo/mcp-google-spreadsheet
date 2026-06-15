@@ -42,6 +42,12 @@ interface Connection {
 
 パラメータなし。`connection` を `null` にクリア。
 
+### list_sheets
+
+パラメータなし。接続中のスプレッドシートのシート名を番号付きで返す。
+
+`getMetadata` のみを呼ぶため、`get_sheet_info` と異なりシートごとの追加 API コールは発生しない。シート名の確認・列挙に使う軽量ツール。
+
 ### get_sheet_info
 
 | パラメータ | 型     | 必須 | 説明                                |
@@ -70,7 +76,7 @@ interface Connection {
 
 ## エラーハンドリング
 
-- 未接続時に `read_sheet` / `update_sheet` / `get_sheet_info` を呼ぶと日本語エラーメッセージを返す
+- 未接続時に `list_sheets` / `read_sheet` / `update_sheet` / `get_sheet_info` を呼ぶと日本語エラーメッセージを返す
 - サービスアカウントキーが見つからない場合はセットアップ手順を案内
 - すべてのエラーは `isError: true` フラグ付きで返す
 
